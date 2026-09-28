@@ -1,0 +1,51 @@
+services:
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: okdriver-backend
+
+    restart: unless-stopped
+
+    expose:
+      - "8000"
+
+    ports:
+      - "8000:8000"
+
+    env_file:
+      - ./backend/.env
+
+    volumes:
+      - backend-static:/app/staticfiles
+      - backend-media:/app/media
+
+    command: >
+      sh -c "
+      python manage.py migrate &&
+      python manage.py collectstatic --noinput &&
+      gunicorn backend.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 3
+      "
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+    container_name: okdriver-frontend
+
+    restart: unless-stopped
+
+    depends_on:
+      - backend
+
+    ports:
+      - "80:80"
+
+volumes:
+  backend-static:
+  backend-media:
